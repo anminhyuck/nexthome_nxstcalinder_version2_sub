@@ -29,14 +29,20 @@ export interface Category {
 export interface Todo {
   id: string;
   title: string;
+  text?: string;
   start_date: string;
   end_date: string;
+  dueDate?: string;
+  endDate?: string;
   completed: boolean;
   category_id: string;
-  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  category?: string;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW' | 'high' | 'medium' | 'low';
   description?: string;
   created_at: string;
   user_id: string;
+  tags?: string[];
+  reminderTime?: string;
 }
 
 interface TodoContextType {
@@ -46,11 +52,16 @@ interface TodoContextType {
   addTodo: (todo: Omit<Todo, 'id' | 'created_at' | 'user_id'>) => Promise<void>;
   removeTodo: (id: string) => Promise<void>;
   updateTodo: (id: string, todo: Partial<Todo>) => Promise<void>;
-  addCategory: (category: Omit<Category, 'id' | 'user_id'>) => Promise<void>;
+  addCategory: (category: Omit<Category, 'id' | 'user_id'> | string) => Promise<void>;
   removeCategory: (id: string) => Promise<void>;
   categoryColors: CategoryColor[];
   setCategoryColor: (category: string, color: string) => void;
   getCategoryColor: (category: string) => string;
+  toggleTodo: (id: string) => Promise<void>;
+  deleteTodo: (id: string) => Promise<void>;
+  customCategories?: string[];
+  customColors?: string[];
+  addCustomColor: (color: string) => void;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
@@ -59,6 +70,8 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryColors, setCategoryColors] = useState<CategoryColor[]>([]);
+  const [customCategories, setCustomCategories] = useState<string[]>(['개인', '업무', '학습', '건강', '기타']);
+  const [customColors, setCustomColors] = useState<string[]>([]);
   const router = useRouter();
 
   // 사용자 세션 및 데이터 로드
@@ -159,18 +172,30 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
-  const addCategory = async (category: Omit<Category, 'id' | 'user_id'>) => {
+  const addCategory = async (category: Omit<Category, 'id' | 'user_id'> | string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    const { error } = await supabase
-      .from('categories')
-      .insert([{
-        ...category,
-        user_id: session.user.id
-      }]);
+    if (typeof category === 'string') {
+      const { error } = await supabase
+        .from('categories')
+        .insert([{
+          name: category,
+          color: category,
+          user_id: session.user.id
+        }]);
 
-    if (error) throw error;
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('categories')
+        .insert([{
+          ...category,
+          user_id: session.user.id
+        }]);
+
+      if (error) throw error;
+    }
   };
 
   const removeCategory = async (id: string) => {
@@ -199,6 +224,34 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     return categoryColor ? categoryColor.color : 'bg-gray-500';
   };
 
+  const toggleTodo = async (id: string) => {
+    const { error } = await supabase
+      .from('todos')
+      .update({ completed: !todos.find(t => t.id === id)?.completed })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    setTodos(prevTodos => prevTodos.map(t =>
+      t.id === id ? { ...t, completed: !t.completed } : t
+    ));
+  };
+
+  const deleteTodo = async (id: string) => {
+    const { error } = await supabase
+      .from('todos')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    setTodos(prevTodos => prevTodos.filter(t => t.id !== id));
+  };
+
+  const addCustomColor = (color: string) => {
+    setCategoryColors([...categoryColors, { category: 'Custom', color }]);
+  };
+
   return (
     <TodoContext.Provider
       value={{
@@ -213,6 +266,11 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         categoryColors,
         setCategoryColor,
         getCategoryColor,
+        toggleTodo,
+        deleteTodo,
+        customCategories,
+        customColors,
+        addCustomColor,
       }}
     >
       {children}
