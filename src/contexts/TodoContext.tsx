@@ -42,6 +42,7 @@ export interface Todo {
 interface TodoContextType {
   todos: Todo[];
   categories: Category[];
+  setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
   addTodo: (todo: Omit<Todo, 'id' | 'created_at' | 'user_id'>) => Promise<void>;
   removeTodo: (id: string) => Promise<void>;
   updateTodo: (id: string, todo: Partial<Todo>) => Promise<void>;
@@ -203,6 +204,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       value={{
         todos,
         categories,
+        setTodos,
         addTodo,
         removeTodo,
         updateTodo,
