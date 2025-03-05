@@ -8,7 +8,9 @@ import { useScheduleContext } from '@/contexts/ScheduleContext';
 import * as priorityUtils from '@/utils/priority';
 import Link from 'next/link';
 import 'react-calendar/dist/Calendar.css';
-import { Value } from 'react-calendar/dist/cjs/shared/types';
+
+type ValuePiece = Date | null;
+type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
