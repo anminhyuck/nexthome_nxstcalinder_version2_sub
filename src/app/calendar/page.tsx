@@ -45,7 +45,7 @@ export default function CalendarPage() {
     return start.getTime() === end.getTime();
   };
 
-  const handleDateClick = (value: Date | Date[] | null, event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleDateClick = (value: Value) => {
     if (value instanceof Date) {
       setSelectedDate(value);
       setSelectedSchedules(getSchedulesForDate(value));
