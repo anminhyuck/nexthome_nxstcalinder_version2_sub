@@ -46,7 +46,9 @@ export default function TodoList() {
   const allTags = useMemo(() => {
     const tags = new Set<string>();
     todos.forEach(todo => {
-      todo.tags.forEach(tag => tags.add(tag));
+      if (todo.tags && Array.isArray(todo.tags)) {
+        todo.tags.forEach(tag => tags.add(tag));
+      }
     });
     return Array.from(tags);
   }, [todos]);
@@ -80,7 +82,7 @@ export default function TodoList() {
         
         if (dueDate < today) {
           // 마감일이 지난 할 일에 알림 추가
-          const message = `"${todo.text}" 할 일의 마감일이 지났습니다.`;
+          const message = `"${todo.text || todo.title || '할 일'}" 할 일의 마감일이 지났습니다.`;
           if (!notifications.includes(message)) {
             setNotifications(prev => [...prev, message]);
           }
@@ -100,7 +102,7 @@ export default function TodoList() {
     todos.forEach(todo => {
       if (todo.reminderTime && todo.reminderTime === currentTime && !todo.completed) {
         // 알림 시간이 된 할 일에 알림 표시
-        const message = `"${todo.text}" 할 일의 알림 시간입니다.`;
+        const message = `"${todo.text || todo.title || '할 일'}" 할 일의 알림 시간입니다.`;
         if (!notifications.includes(message)) {
           setNotifications(prev => [...prev, message]);
           
@@ -219,7 +221,7 @@ export default function TodoList() {
     return todos.filter((todo) => {
       // 검색어 필터링
       const matchesSearch = searchTerm === '' || 
-        todo.text.toLowerCase().includes(searchTerm.toLowerCase());
+        (todo.text && todo.text.toLowerCase().includes(searchTerm.toLowerCase()));
       
       // 상태 필터링
       const matchesStatus = 
