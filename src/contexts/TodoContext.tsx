@@ -74,6 +74,7 @@ interface TodoContextType {
   toggleTodo: (id: string) => Promise<void>;
   deleteTodo: (id: string) => Promise<void>;
   customCategories?: string[];
+  setCustomCategories: React.Dispatch<React.SetStateAction<string[]>>;
   customColors?: string[];
   addCustomColor: (color: string) => void;
 }
@@ -211,25 +212,59 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    if (typeof category === 'string') {
-      const { error } = await supabase
-        .from('categories')
-        .insert([{
-          name: category,
-          color: category,
-          user_id: session.user.id
-        }]);
+    try {
+      if (typeof category === 'string') {
+        // 카테고리 이름만 전달된 경우
+        const { data, error } = await supabase
+          .from('categories')
+          .insert([{
+            name: category,
+            color: 'bg-blue-500', // 기본 색상
+            user_id: session.user.id
+          }])
+          .select();
 
-      if (error) throw error;
-    } else {
-      const { error } = await supabase
-        .from('categories')
-        .insert([{
-          ...category,
-          user_id: session.user.id
-        }]);
+        if (error) {
+          console.error('카테고리 추가 오류:', error);
+          throw error;
+        }
 
-      if (error) throw error;
+        if (data && data.length > 0) {
+          setCategories(prev => [...prev, data[0]]);
+          // 커스텀 카테고리 목록에 추가
+          if (customCategories) {
+            setCustomCategories([...customCategories, category]);
+          } else {
+            setCustomCategories([category]);
+          }
+        }
+      } else {
+        // 카테고리 객체가 전달된 경우
+        const { data, error } = await supabase
+          .from('categories')
+          .insert([{
+            ...category,
+            user_id: session.user.id
+          }])
+          .select();
+
+        if (error) {
+          console.error('카테고리 추가 오류:', error);
+          throw error;
+        }
+
+        if (data && data.length > 0) {
+          setCategories(prev => [...prev, data[0]]);
+          // 커스텀 카테고리 목록에 추가
+          if (customCategories) {
+            setCustomCategories([...customCategories, data[0].name]);
+          } else {
+            setCustomCategories([data[0].name]);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('카테고리 추가 중 오류 발생:', error);
     }
   };
 
@@ -304,6 +339,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         toggleTodo,
         deleteTodo,
         customCategories,
+        setCustomCategories,
         customColors,
         addCustomColor,
       }}
