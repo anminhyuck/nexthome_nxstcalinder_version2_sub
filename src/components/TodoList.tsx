@@ -129,11 +129,14 @@ export default function TodoList() {
 
     addTodo({
       text: newTodo,
+      title: newTodo,
       completed: false,
       category,
       priority,
       dueDate: dueDate || undefined,
       endDate: endDate || undefined,
+      start_date: dueDate || new Date().toISOString(),
+      end_date: endDate || new Date().toISOString(),
       tags: selectedTags,
       reminderTime: reminderTime || undefined
     });

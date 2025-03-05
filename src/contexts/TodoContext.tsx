@@ -49,7 +49,21 @@ interface TodoContextType {
   todos: Todo[];
   categories: Category[];
   setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
-  addTodo: (todo: Omit<Todo, 'id' | 'created_at' | 'user_id'>) => Promise<void>;
+  addTodo: (todo: {
+    text?: string;
+    title?: string;
+    completed: boolean;
+    category?: string;
+    category_id?: string;
+    priority: 'HIGH' | 'MEDIUM' | 'LOW' | 'high' | 'medium' | 'low';
+    dueDate?: string;
+    endDate?: string;
+    start_date?: string;
+    end_date?: string;
+    description?: string;
+    tags?: string[];
+    reminderTime?: string;
+  }) => Promise<void>;
   removeTodo: (id: string) => Promise<void>;
   updateTodo: (id: string, todo: Partial<Todo>) => Promise<void>;
   addCategory: (category: Omit<Category, 'id' | 'user_id'> | string) => Promise<void>;
@@ -140,16 +154,37 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     };
   }, [router]);
 
-  const addTodo = async (todo: Omit<Todo, 'id' | 'created_at' | 'user_id'>) => {
+  const addTodo = async (todo: {
+    text?: string;
+    title?: string;
+    completed: boolean;
+    category?: string;
+    category_id?: string;
+    priority: 'HIGH' | 'MEDIUM' | 'LOW' | 'high' | 'medium' | 'low';
+    dueDate?: string;
+    endDate?: string;
+    start_date?: string;
+    end_date?: string;
+    description?: string;
+    tags?: string[];
+    reminderTime?: string;
+  }) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
+    // 필수 필드 채우기
+    const todoToInsert = {
+      ...todo,
+      title: todo.title || todo.text || '새 할 일',
+      start_date: todo.start_date || todo.dueDate || new Date().toISOString(),
+      end_date: todo.end_date || todo.endDate || new Date().toISOString(),
+      category_id: todo.category_id || '1', // 기본 카테고리 ID
+      user_id: session.user.id
+    };
+
     const { error } = await supabase
       .from('todos')
-      .insert([{
-        ...todo,
-        user_id: session.user.id
-      }]);
+      .insert([todoToInsert]);
 
     if (error) throw error;
   };

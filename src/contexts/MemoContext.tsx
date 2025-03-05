@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 export interface Memo {
   id: string;
+  title?: string;
   content: string;
   created_at: string;
   updated_at: string;
@@ -85,13 +86,14 @@ export function MemoProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const { content } = memo;
+      const { content, title } = memo;
       const now = new Date().toISOString();
       
       const { data, error } = await supabase
         .from('memos')
         .insert([{
           content,
+          title,
           user_id: session.user.id
         }])
         .select();

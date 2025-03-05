@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from 'react';
-import { useMemo } from '@/app/contexts/MemoContext';
+import { useMemoContext } from '@/contexts/MemoContext';
 
 export default function CreateMemo() {
-  const { addMemo } = useMemo();
+  const { addMemo } = useMemoContext();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isOpen, setIsOpen] = useState(false);
