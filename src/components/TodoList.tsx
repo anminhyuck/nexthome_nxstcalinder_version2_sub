@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useTodoContext } from "@/contexts/TodoContext";
+import { useTodoContext, DEFAULT_COLORS } from "@/contexts/TodoContext";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -319,7 +319,7 @@ export default function TodoList() {
             <option value="개인">개인</option>
             <option value="업무">업무</option>
             <option value="기타">기타</option>
-            {customCategories.map((cat) => (
+            {customCategories?.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
             <option value="add_new">+ 새 카테고리</option>
@@ -437,7 +437,7 @@ export default function TodoList() {
       <div className="mb-6">
         <h3 className="text-gray-700 font-medium mb-2">카테고리 색상 설정</h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {['개인', '업무', '기타', ...customCategories].map(cat => (
+          {['개인', '업무', '기타', ...(customCategories || [])].map(cat => (
             <div 
               key={cat} 
               className="p-2 rounded-lg border border-gray-200 flex items-center justify-between"
@@ -469,20 +469,16 @@ export default function TodoList() {
                   <button
                     key={color.value}
                     onClick={() => handleColorSelect(color.value)}
-                    className={`p-2 rounded-lg flex items-center justify-between ${color.value} text-white`}
-                  >
-                    {color.name}
-                  </button>
+                    className={`w-8 h-8 rounded-full ${color.value}`}
+                  ></button>
                 ))}
                 
-                {customColors.map(color => (
+                {customColors?.map(color => (
                   <button
                     key={color}
                     onClick={() => handleColorSelect(color)}
-                    className={`p-2 rounded-lg ${color} text-white`}
-                  >
-                    커스텀
-                  </button>
+                    className={`w-8 h-8 rounded-full ${color}`}
+                  ></button>
                 ))}
               </div>
               
@@ -553,23 +549,16 @@ export default function TodoList() {
         <div className="flex flex-wrap gap-2 mb-4">
           <button
             onClick={() => setCategoryFilter('all')}
-            className={`p-2 rounded-lg transition-all duration-300 ${
-              categoryFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
-            }`}
+            className={`px-3 py-1 rounded-full text-sm ${categoryFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
           >
             전체
           </button>
-          {['개인', '업무', '기타', ...customCategories].map(cat => (
+          {['개인', '업무', '기타', ...(customCategories || [])].map(cat => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
-              className={`p-2 rounded-lg transition-all duration-300 flex items-center ${
-                categoryFilter === cat 
-                  ? `${getCategoryColor(cat)} text-white` 
-                  : 'bg-gray-200 text-gray-800'
-              }`}
+              className={`px-3 py-1 rounded-full text-sm ${categoryFilter === cat ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
             >
-              <div className={`w-3 h-3 rounded-full mr-1 ${categoryFilter !== cat ? getCategoryColor(cat) : 'bg-white'}`}></div>
               {cat}
             </button>
           ))}
@@ -611,21 +600,18 @@ export default function TodoList() {
           filteredTodos.map((todo, index) => {
             // 마감일이 지났는지 확인
             const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && !todo.completed;
-            const categoryColor = getCategoryColor(todo.category);
+            const categoryColor = getCategoryColor(todo.category || '기타');
             
             return (
               <motion.div
                 key={todo.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className={`p-4 mb-2 rounded-lg border transition-all duration-300 ${
-                  isOverdue 
-                    ? 'bg-red-50 border-red-200' 
-                    : todo.completed 
-                      ? 'bg-gray-50 border-gray-200' 
-                      : 'bg-white border-gray-200'
-                }`}
+                className={`p-4 rounded-lg shadow-md mb-3 ${
+                  todo.completed ? 'bg-gray-100' : 'bg-white'
+                } ${isOverdue ? 'border-l-4 border-red-500' : ''}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
