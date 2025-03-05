@@ -1,24 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ScheduleProvider } from '@/contexts/ScheduleContext';
 import { MemoProvider } from '@/contexts/MemoContext';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { Inter } from 'next/font/google'
+import { Inter, Roboto_Mono } from 'next/font/google'
 import { Black_Han_Sans } from 'next/font/google'
 import { BookmarkProvider } from '@/contexts/BookmarkContext';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: "--font-sans",
+});
+
+const robotoMono = Roboto_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const inter = Inter({ subsets: ['latin'] })
 const blackHanSans = Black_Han_Sans({ 
   weight: '400',
   subsets: ['latin'],
@@ -44,7 +42,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased ${inter.className}`}
+        className={`${inter.variable} ${robotoMono.variable} antialiased ${inter.className}`}
       >
         <AuthProvider>
           <ScheduleProvider>
