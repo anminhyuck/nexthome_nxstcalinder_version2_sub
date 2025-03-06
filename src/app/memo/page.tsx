@@ -11,19 +11,42 @@ import CreateMemo from '@/components/CreateMemo';
 export default function MemoPage() {
   const { memos, updateMemo, deleteMemo } = useMemoContext();
   const [editingMemo, setEditingMemo] = useState<Memo | null>(null);
+  const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
 
   const handleEdit = (memo: Memo) => {
     setEditingMemo(memo);
-    setEditContent(memo.content);
+    
+    // content의 첫 번째 줄을 title로, 나머지를 content로 분리
+    const contentLines = memo.content.split('\n');
+    const title = contentLines[0];
+    const content = contentLines.slice(1).join('\n');
+    
+    setEditTitle(title);
+    setEditContent(content);
   };
 
-  const handleSave = () => {
-    if (editingMemo && editContent.trim()) {
-      updateMemo(editingMemo.id, {
-        content: editContent,
-      });
-      setEditingMemo(null);
+  const handleSave = async () => {
+    if (editingMemo && (editTitle.trim() || editContent.trim())) {
+      try {
+        // title과 content를 합쳐서 저장
+        const newContent = `${editTitle.trim()}\n${editContent.trim()}`;
+        
+        await updateMemo(editingMemo.id, {
+          content: newContent,
+        });
+        
+        setEditingMemo(null);
+        setEditTitle('');
+        setEditContent('');
+        
+        console.log('메모가 성공적으로 업데이트되었습니다.');
+      } catch (error) {
+        console.error('메모 업데이트 중 오류 발생:', error);
+        alert('메모 업데이트 중 오류가 발생했습니다.');
+      }
+    } else if (!editTitle.trim()) {
+      alert('제목을 입력해주세요.');
     }
   };
 
@@ -56,6 +79,13 @@ export default function MemoPage() {
                 <div key={memo.id} className="p-4 bg-white/10 backdrop-blur-md rounded-xl hover:bg-white/20 transition-colors">
                   {editingMemo?.id === memo.id ? (
                     <div className="space-y-4">
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full px-4 py-2 bg-white/20 rounded-lg text-white placeholder-white/60"
+                        placeholder="제목"
+                      />
                       <textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
@@ -70,7 +100,11 @@ export default function MemoPage() {
                           저장
                         </button>
                         <button
-                          onClick={() => setEditingMemo(null)}
+                          onClick={() => {
+                            setEditingMemo(null);
+                            setEditTitle('');
+                            setEditContent('');
+                          }}
                           className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
                         >
                           취소
