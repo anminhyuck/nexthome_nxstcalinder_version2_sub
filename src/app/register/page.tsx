@@ -73,16 +73,24 @@ export default function RegisterPage() {
       // 이메일 생성
       const email = createUserEmail(formData.username);
 
-      // 사용자 이름 중복 체크
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', formData.username)
-        .single();
+      // 프로필 테이블 존재 여부 확인은 제거 (Supabase Studio에서 직접 생성)
 
-      if (existingUser) {
-        setError('이미 사용 중인 아이디입니다.');
-        return;
+      // 사용자 이름 중복 체크 시도 (테이블이 없으면 오류가 발생할 수 있음)
+      try {
+        const { data: existingUser, error: checkError } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', formData.username)
+          .single();
+
+        if (!checkError && existingUser) {
+          setError('이미 사용 중인 아이디입니다.');
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.log('사용자 이름 중복 체크 중 오류 (테이블이 없을 수 있음):', error);
+        // 테이블이 없을 수 있으므로 오류를 무시하고 계속 진행
       }
       
       // Supabase 회원가입
@@ -91,6 +99,7 @@ export default function RegisterPage() {
         password: formData.password,
         options: {
           data: {
+            username: formData.username,
             full_name: formData.username,
           }
         }
@@ -99,6 +108,27 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError;
 
       if (data.user) {
+        try {
+          // 사용자 프로필 생성 시도
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                username: formData.username,
+                full_name: formData.username
+              }
+            ]);
+
+          if (profileError) {
+            console.error('프로필 생성 오류:', profileError);
+            // 프로필 생성 오류가 있어도 계속 진행 (테이블이 없을 수 있음)
+          }
+        } catch (error) {
+          console.error('프로필 생성 중 예외 발생:', error);
+          // 프로필 생성 오류가 있어도 계속 진행
+        }
+
         // 기본 카테고리 생성
         await createDefaultCategories(data.user.id);
         alert('회원가입이 완료되었습니다. 로그인해주세요.');
@@ -106,7 +136,7 @@ export default function RegisterPage() {
       }
     } catch (error: any) {
       console.error('회원가입 오류:', error);
-      alert(error.message);
+      setError(error.message || '회원가입 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
